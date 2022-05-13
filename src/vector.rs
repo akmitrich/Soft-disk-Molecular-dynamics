@@ -3,6 +3,10 @@ pub struct Vector<const D: usize> {
     components: [f32; D],
 }
 
+pub struct Region<const D: usize> {
+    size: Vector<D>,
+}
+
 impl<const D: usize> Vector<D> {
     pub fn new() -> Vector<D> {
         Vector { components: [0_f32; D] }
@@ -35,5 +39,11 @@ impl<const D: usize> Vector<D> {
         i_self.zip(i_other)
             .map(|(a, b)| a * b)
             .sum()
+    }
+}
+
+impl<const D: usize> Region<D> {
+    pub fn new(size: [f32; D]) -> Region<D> {
+        Region { size }
     }
 }
