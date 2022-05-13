@@ -3,6 +3,7 @@ pub struct Vector<const D: usize> {
     components: [f32; D],
 }
 
+#[derive(Debug)]
 pub struct Region<const D: usize> {
     size: Vector<D>,
 }
@@ -44,6 +45,6 @@ impl<const D: usize> Vector<D> {
 
 impl<const D: usize> Region<D> {
     pub fn new(size: [f32; D]) -> Region<D> {
-        Region { size }
+        Region { size: Vector::from(size) }
     }
 }

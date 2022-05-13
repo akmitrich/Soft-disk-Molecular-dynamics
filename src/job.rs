@@ -96,6 +96,6 @@ impl<const D: usize> Job<D> {
 
     fn single_step(&mut self) {
         self.step_count += 1;
-        self.t_now = self.step_count * self.delta_t;
+        self.t_now = (self.step_count as f32) * self.delta_t;
     }
 }

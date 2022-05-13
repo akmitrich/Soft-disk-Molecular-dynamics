@@ -1,4 +1,6 @@
+pub mod prop;
 pub mod vector;
+pub mod job;
 
 #[test]
 fn test_zero() {

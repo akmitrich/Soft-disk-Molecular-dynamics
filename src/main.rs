@@ -1,6 +1,9 @@
+mod prop;
 mod vector;
+mod job;
 
 fn main() {
-    let a = vector::Vector::<3>::new();
-    println!("Hello, world! {:?}", a);
+    let mut global = job::Job::<3>::setup_job();
+    global.run();
+    println!("Mol:\n {:?}", global);
 }
