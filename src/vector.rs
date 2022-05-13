@@ -21,6 +21,12 @@ impl<const D: usize> Vector<D> {
         Vector { components }
     }
 
+    pub fn from_scaled(vect: &Vector<D>, factor: f32) -> Vector<D> {
+        let mut result = Vector::from(vect.components().clone());
+        result.multiply_by(factor);
+        result
+    }
+
     pub fn plus(&mut self, other: &Vector<D>) {
         let other_components = other.components();
         for i in 0..D {

@@ -97,5 +97,20 @@ impl<const D: usize> Job<D> {
     fn single_step(&mut self) {
         self.step_count += 1;
         self.t_now = (self.step_count as f32) * self.delta_t;
+        self.leapfrog_begin();
+        self.leapfrog_end();
+}
+
+    fn leapfrog_begin(&mut self) {
+        for i in 0..self.n_mol() {
+            self.vel[i].plus(&Vector::from_scaled(&self.acc[i], self.delta_t / 2_f32));
+            self.pos[i].plus(&Vector::from_scaled(&self.vel[i], self.delta_t));
+        }
+    }
+
+    fn leapfrog_end(&mut self) {
+        for i in 0..self.n_mol() {
+            self.vel[i].plus(&Vector::from_scaled(&self.acc[i], self.delta_t / 2_f32));
+        }
     }
 }
