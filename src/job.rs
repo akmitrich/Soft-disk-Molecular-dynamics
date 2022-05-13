@@ -98,8 +98,15 @@ impl<const D: usize> Job<D> {
         self.step_count += 1;
         self.t_now = (self.step_count as f32) * self.delta_t;
         self.leapfrog_begin();
+        self.apply_boundary_conditions();
         self.leapfrog_end();
-}
+    }
+
+    fn apply_boundary_conditions(&mut self) {
+        for i in 0..self.n_mol() {
+            self.region.wrap(&mut self.pos[i]);
+        }
+    }
 
     fn leapfrog_begin(&mut self) {
         for i in 0..self.n_mol() {

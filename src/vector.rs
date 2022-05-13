@@ -53,4 +53,18 @@ impl<const D: usize> Region<D> {
     pub fn new(size: [f32; D]) -> Region<D> {
         Region { size: Vector::from(size) }
     }
+
+    pub fn wrap(&self, r: &mut Vector<D>) {
+        let mut shift = [0_f32; D];
+        for i in 0..D {
+            let component = r.components()[i];
+            let size_i = self.size.components()[i];
+            if component >= size_i / 2_f32 {
+                shift[i] = -size_i;
+            } else if component < -size_i / 2_f32 {
+                shift[i] = size_i;
+            }
+        }
+        r.plus(&Vector::from(shift));
+    }
 }
