@@ -47,6 +47,18 @@ impl<const D: usize> Vector<D> {
             .map(|(a, b)| a * b)
             .sum()
     }
+
+    pub fn difference(&self, other: &Vector<D>) -> Vector<D> {
+        let mut c = [0_f32; D];
+        for i in 0..D {
+            c[i] = self.components()[i] - other.components()[i];
+        }
+        Vector::from(c)
+    }
+
+    pub fn square_distance(&self) -> f32 {
+        self.dot(self)
+    }
 }
 
 impl<const D: usize> Region<D> {

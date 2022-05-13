@@ -76,6 +76,7 @@ impl<const D: usize> Job<D> {
     }
 
     fn init_acc(&mut self) {
+        self.acc.clear();
         for _ in 0..self.n_mol() {
             self.acc.push(Vector::<D>::new());
         }
@@ -99,6 +100,7 @@ impl<const D: usize> Job<D> {
         self.t_now = (self.step_count as f32) * self.delta_t;
         self.leapfrog_begin();
         self.apply_boundary_conditions();
+        self.compute_forces();
         self.leapfrog_end();
     }
 
@@ -118,6 +120,25 @@ impl<const D: usize> Job<D> {
     fn leapfrog_end(&mut self) {
         for i in 0..self.n_mol() {
             self.vel[i].plus(&Vector::from_scaled(&self.acc[i], self.delta_t / 2_f32));
+        }
+    }
+
+    fn compute_forces(&mut self) {
+        self.init_acc();
+        let rr_cut = self.r_cut * self.r_cut;
+        for i in 0..(self.n_mol() - 1) {
+            for j in (i + 1)..self.n_mol() {
+                let mut dr = Vector::difference(&self.pos[i], &self.pos[j]);
+                self.region.wrap(&mut dr);
+                let rr = dr.square_distance();
+                if rr < rr_cut {
+                    let rri = 1_f32 / rr;
+                    let rri3 = rri * rri * rri;
+                    let force_value = 48_f32 * rri3 * (rri3 - 0.5) * rri;
+                    self.acc[i].plus(&Vector::from_scaled(&dr, force_value));
+                    self.acc[j].plus(&Vector::from_scaled(&dr, -force_value));
+                }
+            }
         }
     }
 }
