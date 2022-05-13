@@ -51,6 +51,51 @@ impl<const D: usize> Job<D> {
             tot_energy: Prop::new(),
             pressure: Prop::new(),
         };
+        result.init_coord();
+        result.init_vels();
+        result.init_acc();
         result
+    }
+
+    fn init_coord(&mut self) {
+        let mut x = [0_f32; D];
+        x[0] = 1_f32;
+        self.pos.push(Vector::<D>::from(x));
+        let mut x = [0_f32; D];
+        x[0] = -1_f32;
+        self.pos.push(Vector::<D>::from(x));
+    }
+
+    fn init_vels(&mut self) {
+        let mut v = [0_f32; D];
+        v[0] = -1_f32;
+        self.vel.push(Vector::<D>::from(v));
+        let mut v = [0_f32; D];
+        v[0] = 1_f32;
+        self.vel.push(Vector::<D>::from(v));
+    }
+
+    fn init_acc(&mut self) {
+        for _ in 0..self.n_mol() {
+            self.acc.push(Vector::<D>::new());
+        }
+    }
+
+    pub fn n_mol(&self) -> usize {
+        self.pos.len()
+    }
+
+    pub fn run(&mut self) {
+        while self.more_cycles {
+            self.single_step();
+            if self.step_count >= self.step_limit {
+                self.more_cycles = false;
+            }
+        }
+    }
+
+    fn single_step(&mut self) {
+        self.step_count += 1;
+        self.t_now = self.step_count * self.delta_t;
     }
 }
