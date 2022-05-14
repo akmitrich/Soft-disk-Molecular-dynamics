@@ -21,12 +21,6 @@ impl<const D: usize> Vector<D> {
         Vector { components }
     }
 
-    pub fn from_scaled(vect: &Vector<D>, factor: f32) -> Vector<D> {
-        let mut result = Vector::from(vect.components().clone());
-        result.multiply_by(factor);
-        result
-    }
-
     pub fn plus(&mut self, other: &Vector<D>) {
         let other_components = other.components();
         for i in 0..D {
@@ -34,9 +28,15 @@ impl<const D: usize> Vector<D> {
         }
     }
 
-    pub fn multiply_by(&mut self, c: f32) {
+    pub fn new_scaled_by(&self, factor: f32) -> Vector<D> {
+        let mut result = Vector::from(self.components().clone());
+        result.multiply_by(factor);
+        result
+    }
+
+    pub fn multiply_by(&mut self, factor: f32) {
         for i in 0..D {
-            self.components[i] *= c;
+            self.components[i] *= factor;
         }
     }
 
@@ -56,7 +56,7 @@ impl<const D: usize> Vector<D> {
         Vector::from(c)
     }
 
-    pub fn square_distance(&self) -> f32 {
+    pub fn vector_squared(&self) -> f32 {
         self.dot(self)
     }
 }
@@ -66,10 +66,10 @@ impl<const D: usize> Region<D> {
         Region { size: Vector::from(size) }
     }
 
-    pub fn wrap(&self, r: &mut Vector<D>) {
+    pub fn wrap(&self, coords: &mut Vector<D>) {
         let mut shift = [0_f32; D];
         for i in 0..D {
-            let component = r.components()[i];
+            let component = coords.components()[i];
             let size_i = self.size.components()[i];
             if component >= size_i / 2_f32 {
                 shift[i] = -size_i;
@@ -77,6 +77,6 @@ impl<const D: usize> Region<D> {
                 shift[i] = size_i;
             }
         }
-        r.plus(&Vector::from(shift));
+        coords.plus(&Vector::from(shift));
     }
 }

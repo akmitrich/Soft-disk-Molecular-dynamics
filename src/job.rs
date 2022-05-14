@@ -6,10 +6,10 @@ pub struct Job<const D: usize> {
     pos: Vec<Vector<D>>,
     vel: Vec<Vector<D>>,
     acc: Vec<Vector<D>>,
-    region: Region<D>,
+    boundary: Region<D>,
     delta_t: f32,
     density: f32,
-    r_cut: f32,
+    cut_off_radius: f32,
     temperature: f32,
     t_now: f32,
     vel_magnitude: f32,
@@ -32,10 +32,10 @@ impl<const D: usize> Job<D> {
             pos: vec![],
             vel: vec![],
             acc: vec![],
-            region: Region::new([50.; D]),
+            boundary: Region::new([50.; D]),
             delta_t: 1e-3,
             density: 0.5,
-            r_cut: 10_f32,
+            cut_off_radius: 10_f32,
             temperature: 0_f32,
             t_now: 0_f32,
             vel_magnitude: 0_f32,
@@ -53,7 +53,7 @@ impl<const D: usize> Job<D> {
         };
         result.init_coord();
         result.init_vels();
-        result.init_acc();
+        result.reset_acc();
         result
     }
 
@@ -75,7 +75,7 @@ impl<const D: usize> Job<D> {
         self.vel.push(Vector::<D>::from(v));
     }
 
-    fn init_acc(&mut self) {
+    fn reset_acc(&mut self) {
         self.acc.clear();
         for _ in 0..self.n_mol() {
             self.acc.push(Vector::<D>::new());
@@ -106,37 +106,39 @@ impl<const D: usize> Job<D> {
 
     fn apply_boundary_conditions(&mut self) {
         for i in 0..self.n_mol() {
-            self.region.wrap(&mut self.pos[i]);
+            self.boundary.wrap(&mut self.pos[i]);
         }
     }
 
     fn leapfrog_begin(&mut self) {
         for i in 0..self.n_mol() {
-            self.vel[i].plus(&Vector::from_scaled(&self.acc[i], self.delta_t / 2_f32));
-            self.pos[i].plus(&Vector::from_scaled(&self.vel[i], self.delta_t));
+            self.vel[i].plus(&self.acc[i].new_scaled_by(self.delta_t / 2_f32));
+            self.pos[i].plus(&self.vel[i].new_scaled_by(self.delta_t));
         }
     }
 
     fn leapfrog_end(&mut self) {
         for i in 0..self.n_mol() {
-            self.vel[i].plus(&Vector::from_scaled(&self.acc[i], self.delta_t / 2_f32));
+            self.vel[i].plus(&self.acc[i].new_scaled_by(self.delta_t / 2_f32));
         }
     }
 
     fn compute_forces(&mut self) {
-        self.init_acc();
-        let rr_cut = self.r_cut * self.r_cut;
+        self.reset_acc();
+        self.u_sum = 0_f32;
+        let cut_off_squared = self.cut_off_radius * self.cut_off_radius;
         for i in 0..(self.n_mol() - 1) {
             for j in (i + 1)..self.n_mol() {
-                let mut dr = Vector::difference(&self.pos[i], &self.pos[j]);
-                self.region.wrap(&mut dr);
-                let rr = dr.square_distance();
-                if rr < rr_cut {
-                    let rri = 1_f32 / rr;
-                    let rri3 = rri * rri * rri;
-                    let force_value = 48_f32 * rri3 * (rri3 - 0.5) * rri;
-                    self.acc[i].plus(&Vector::from_scaled(&dr, force_value));
-                    self.acc[j].plus(&Vector::from_scaled(&dr, -force_value));
+                let mut distance_vector = Vector::difference(&self.pos[i], &self.pos[j]);
+                self.boundary.wrap(&mut distance_vector);
+                let distance_squared = distance_vector.vector_squared();
+                if distance_squared < cut_off_squared {
+                    let distance_squared_inverted = 1_f32 / distance_squared;
+                    let distance_inverted_in_6th = distance_squared_inverted * distance_squared_inverted * distance_squared_inverted;
+                    let force_value = 48_f32 * distance_inverted_in_6th * (distance_inverted_in_6th - 0.5) * distance_squared_inverted;
+                    self.acc[i].plus(&distance_vector.new_scaled_by(force_value));
+                    self.acc[j].plus(&distance_vector.new_scaled_by(-force_value));
+                    self.u_sum += 4_f32 * distance_inverted_in_6th * (distance_inverted_in_6th - 1_f32) + 1_f32;
                 }
             }
         }
