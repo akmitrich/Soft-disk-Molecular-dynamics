@@ -17,6 +17,12 @@ impl<const D: usize> Vector<D> {
         &self.components
     }
 
+    pub fn component_sum(&self) -> f32 {
+        self.components()
+            .iter()
+            .sum()
+    }
+
     pub fn from(components: [f32; D]) -> Vector<D> {
         Vector { components }
     }
@@ -58,6 +64,10 @@ impl<const D: usize> Vector<D> {
 
     pub fn vector_squared(&self) -> f32 {
         self.dot(self)
+    }
+
+    pub fn squared_length(&self) -> f32 {
+        self.vector_squared()
     }
 }
 
