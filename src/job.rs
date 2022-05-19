@@ -29,9 +29,13 @@ pub struct Job<const D: usize> {
     pressure: Prop,
 }
 
-impl<const D: usize> Job<D> {
-    pub fn setup_job() -> Job<D> {
-        let mut result: Job<D> = Job { 
+pub struct JobSetup<const D: usize> {
+    job: Job<D>,
+}
+
+impl<const D: usize> Default for Job<D> {
+    fn default() -> Self {
+        Job { 
             pos: vec![],
             vel: vec![],
             acc: vec![],
@@ -54,31 +58,11 @@ impl<const D: usize> Job<D> {
             kin_energy: Prop::new(),
             tot_energy: Prop::new(),
             pressure: Prop::new(),
-        };
-        result.init_coord();
-        result.init_vels();
-        result.reset_acc();
-        result
+        }
     }
+}
 
-    fn init_coord(&mut self) {
-        let mut x = [0_f32; D];
-        x[0] = 1_f32;
-        self.pos.push(Vector::<D>::from(x));
-        let mut x = [0_f32; D];
-        x[0] = -1_f32;
-        self.pos.push(Vector::<D>::from(x));
-    }
-
-    fn init_vels(&mut self) {
-        let mut v = [0_f32; D];
-        v[0] = -1_f32;
-        self.vel.push(Vector::<D>::from(v));
-        let mut v = [0_f32; D];
-        v[0] = 1_f32;
-        self.vel.push(Vector::<D>::from(v));
-    }
-
+impl<const D: usize> Job<D> {
     fn reset_acc(&mut self) {
         self.acc.clear();
         for _ in 0..self.n_mol() {
@@ -141,11 +125,15 @@ impl<const D: usize> Job<D> {
     }
 
     fn compute_forces(&mut self) {
+        if self.acc.len() == 0 {
+            eprintln!("{:?} has nothing to do", self);
+            return;
+        }
         self.reset_acc();
         self.u_sum = 0_f32;
         self.vir_sum = 0_f32;
         let cut_off_squared = self.cut_off_radius * self.cut_off_radius;
-        for i in 0..(self.n_mol() - 1) {
+        for i in 0..self.n_mol() - 1 {
             for j in (i + 1)..self.n_mol() {
                 let mut distance_vector = Vector::difference(&self.pos[i], &self.pos[j]);
                 self.boundary.wrap(&mut distance_vector);
@@ -191,5 +179,50 @@ impl<const D: usize> Job<D> {
     fn print_summary(&self) {
         println!("stepCount = {}; timeNow = {}; average velocity component sum {}; total energy {}; kinetic energy {}; pressure {}.",
     self.step_count, self.t_now, self.v_sum.component_sum() / self.n_mol() as f32, self.tot_energy, self.kin_energy, self.pressure);
+    }
+}
+
+impl<const D: usize> JobSetup<D> {
+    pub fn start() -> Self {
+        let mut result = Self {
+            job: Job::default(),
+        };
+        result.trivial_pos();
+        result.trivial_vels();
+        result.job.reset_acc();
+        result
+    }
+
+    fn trivial_pos(&mut self) {
+        let mut x = [0_f32; D];
+        x[0] = 1_f32;
+        self.job.pos.push(Vector::<D>::from(x));
+        let mut x = [0_f32; D];
+        x[0] = -1_f32;
+        self.job.pos.push(Vector::<D>::from(x));
+    }
+
+    fn trivial_vels(&mut self) {
+        let mut v = [0_f32; D];
+        v[0] = -1_f32;
+        self.job.vel.push(Vector::<D>::from(v));
+        let mut v = [0_f32; D];
+        v[0] = 1_f32;
+        self.job.vel.push(Vector::<D>::from(v));
+    }
+
+
+    pub fn step_avg(mut self, avg: usize) -> Self {
+        self.job.step_avg = avg;
+        self
+    }
+
+    pub fn step_limit(mut self, limit: usize) -> Self {
+        self.job.step_limit = limit;
+        self
+    }
+
+    pub fn get_job(self) -> Job<D> {
+        self.job
     }
 }

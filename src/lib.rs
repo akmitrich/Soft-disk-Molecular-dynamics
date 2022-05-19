@@ -1,3 +1,5 @@
+#[allow(dead_code)]
+#[allow(unused)]
 mod prop;
 mod vector;
 mod job;
@@ -42,4 +44,10 @@ fn test_dot() {
     assert_eq!(12_f32, a.dot(&b));
     assert_eq!(14_f32, a.dot(&a));
     assert_eq!(12_f32, b.dot(&b));
+}
+
+#[test]
+fn test_empty_mol() {
+    let mut test = job::Job::<3>::default();
+    test.run();
 }
