@@ -1,8 +1,7 @@
 #[allow(dead_code)]
 #[allow(unused)]
-mod prop;
-mod vector;
-mod job;
+use crate::vector;
+use crate::prop;
 
 #[test]
 fn test_zero() {
