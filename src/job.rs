@@ -222,6 +222,44 @@ impl<const D: usize> JobSetup<D> {
         self
     }
 
+    pub fn region(mut self, bounds: Region<D>) -> Self {
+        self.job.boundary = bounds;
+        self
+    }
+
+    pub fn init_coords(mut self, cells: [usize; D]) -> Self {
+        let mut item_number: usize = 1;
+        for cell in cells.iter() {
+            item_number *= cell;
+        }
+        assert!(item_number > 0 && item_number < 1_000_000);
+        self.job.pos = Vec::with_capacity(item_number);
+        let mut gap = [0_f32; D];
+        for i in 0..D {
+            gap[i] = self.job.boundary.size.components()[i] / cells[i] as f32;
+        }
+        let mut lattice = vec![];
+        Self::lattice(&cells, &gap, &mut lattice, [0_f32; D], 0);
+        let shift = self.job.boundary.size.new_scaled_by(-0.5);
+        for node in lattice {
+            let mut pos = Vector::<D>::from(node);
+            pos.plus(&shift);
+            self.job.pos.push(pos);
+        }
+        self
+    }
+
+    fn lattice(cells: &[usize; D], gap: &[f32; D], nodes: &mut Vec<[f32; D]>, mut current: [f32; D], current_index: usize) {
+        for i in 0..cells[current_index] {
+            current[current_index] = (0.5_f32 + i as f32) * gap[current_index];
+            if current_index == D - 1 {
+                nodes.push(current.clone());
+            } else {
+                Self::lattice(cells, gap, nodes, current, current_index + 1)
+            }
+        }
+    }
+
     pub fn get_job(self) -> Job<D> {
         self.job
     }

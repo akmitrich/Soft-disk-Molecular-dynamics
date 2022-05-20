@@ -5,7 +5,7 @@ pub struct Vector<const D: usize> {
 
 #[derive(Debug)]
 pub struct Region<const D: usize> {
-    size: Vector<D>,
+    pub size: Vector<D>,
 }
 
 impl<const D: usize> Vector<D> {
