@@ -1,8 +1,6 @@
 use crate::vector::{Vector, Region};
 use crate::prop::Prop;
 
-//pub static global: Box<Job<3>> = Box::new(Job::<3>::setup_job());
-
 #[derive(Debug)]
 pub struct Job<const D: usize> {
     pos: Vec<Vector<D>>,
@@ -227,11 +225,12 @@ impl<const D: usize> JobSetup<D> {
         self
     }
 
-    pub fn init_coords(mut self, cells: [usize; D]) -> Self {
-        let mut item_number: usize = 1;
-        for cell in cells.iter() {
-            item_number *= cell;
-        }
+    pub fn lattice_and_random_vels(mut self, cells: [usize; D]) -> Self {
+        self.init_coords(cells).init_vels()
+    }
+
+    fn init_coords(mut self, cells: [usize; D]) -> Self {
+        let mut item_number = Self::number_of_nodes(&cells);
         assert!(item_number > 0 && item_number < 1_000_000);
         self.job.pos = Vec::with_capacity(item_number);
         let mut gap = [0_f32; D];
@@ -258,6 +257,19 @@ impl<const D: usize> JobSetup<D> {
                 Self::lattice(cells, gap, nodes, current, current_index + 1)
             }
         }
+    }
+
+    fn number_of_nodes(cells: &[usize; D]) -> usize {
+        let mut result: usize = 1;
+        for cell in cells {
+            result *= cell;
+        }
+        result
+    }
+
+    fn init_vels(mut self) -> Self {
+        self.job.vel = Vec::with_capacity(self.job.n_mol());
+        self
     }
 
     pub fn get_job(self) -> Job<D> {
