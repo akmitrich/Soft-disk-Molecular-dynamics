@@ -226,25 +226,18 @@ impl<const D: usize> JobSetup<D> {
     }
 
     pub fn lattice_and_random_vels(mut self, cells: [usize; D]) -> Self {
-        self.init_coords(cells).init_vels()
+        self.init_coords(cells)
+            .init_vels()
     }
 
     fn init_coords(mut self, cells: [usize; D]) -> Self {
         let mut item_number = Self::number_of_nodes(&cells);
         assert!(item_number > 0 && item_number < 1_000_000);
-        self.job.pos = Vec::with_capacity(item_number);
-        let mut gap = [0_f32; D];
-        for i in 0..D {
-            gap[i] = self.job.boundary.size.components()[i] / cells[i] as f32;
-        }
-        let mut lattice = vec![];
+
+        let mut gap = self.calculate_gap(&cells);
+        let mut lattice = Vec::with_capacity(item_number);
         Self::lattice(&cells, &gap, &mut lattice, [0_f32; D], 0);
-        let shift = self.job.boundary.size.new_scaled_by(-0.5);
-        for node in lattice {
-            let mut pos = Vector::<D>::from(node);
-            pos.plus(&shift);
-            self.job.pos.push(pos);
-        }
+        self.job.pos = self.create_pos(lattice);
         self
     }
 
@@ -263,6 +256,25 @@ impl<const D: usize> JobSetup<D> {
         let mut result: usize = 1;
         for cell in cells {
             result *= cell;
+        }
+        result
+    }
+
+    fn calculate_gap(&self, cells: &[usize; D]) -> [f32; D] {
+        let mut result = [0_f32; D];
+        for i in 0..D {
+            result[i] = self.job.boundary.size.components()[i] / cells[i] as f32;
+        }
+        result
+    }
+
+    fn create_pos(&self, lattice: Vec<[f32; D]>) -> Vec<Vector<D>> {
+        let mut result = Vec::with_capacity(lattice.len());
+        let shift = self.job.boundary.get_shift(-0.5);
+        for node in lattice {
+            let mut pos = Vector::<D>::from(node);
+            pos.plus(&shift);
+            result.push(pos);
         }
         result
     }

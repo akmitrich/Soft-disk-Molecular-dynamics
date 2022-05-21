@@ -89,4 +89,8 @@ impl<const D: usize> Region<D> {
         }
         coords.plus(&Vector::from(shift));
     }
+
+    pub fn get_shift(&self, factor: f32) -> Vector<D> {
+        self.size.new_scaled_by(factor)
+    }
 }

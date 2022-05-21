@@ -9,7 +9,7 @@ fn main() {
         .step_limit(100)
         .step_avg(10)
         .region(vector::Region::new([30., 30., 30.]))
-        .init_coords([4,4,4])
+        .lattice_and_random_vels([10,1,1])
         .get_job();
  //   global.run();
     println!("Mol:\n {:?}", global);
