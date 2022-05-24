@@ -27,6 +27,7 @@ pub struct Job<const D: usize> {
     pressure: Prop,
 }
 
+#[derive(Default)]
 pub struct JobSetup<const D: usize> {
     job: Job<D>,
 }
@@ -181,14 +182,14 @@ impl<const D: usize> Job<D> {
 }
 
 impl<const D: usize> JobSetup<D> {
-    pub fn start() -> Self {
-        let mut result = Self {
-            job: Job::default(),
-        };
-        result.trivial_pos();
-        result.trivial_vels();
-        result.job.reset_acc();
-        result
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    pub fn trivial(mut self) -> Self {
+        self.trivial_pos();
+        self.trivial_vels();
+        self
     }
 
     fn trivial_pos(&mut self) {
@@ -231,10 +232,10 @@ impl<const D: usize> JobSetup<D> {
     }
 
     fn init_coords(mut self, cells: [usize; D]) -> Self {
-        let mut item_number = Self::number_of_nodes(&cells);
+        let item_number = Self::number_of_nodes(&cells);
         assert!(item_number > 0 && item_number < 1_000_000);
 
-        let mut gap = self.calculate_gap(&cells);
+        let gap = self.calculate_gap(&cells);
         let mut lattice = Vec::with_capacity(item_number);
         Self::lattice(&cells, &gap, &mut lattice, [0_f32; D], 0);
         self.job.pos = self.create_pos(lattice);
@@ -284,7 +285,8 @@ impl<const D: usize> JobSetup<D> {
         self
     }
 
-    pub fn get_job(self) -> Job<D> {
+    pub fn get_job(mut self) -> Job<D> {
+        self.job.reset_acc();
         self.job
     }
 }

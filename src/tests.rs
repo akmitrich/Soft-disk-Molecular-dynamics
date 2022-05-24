@@ -2,6 +2,7 @@
 #[allow(unused)]
 use crate::vector;
 use crate::prop;
+use crate::job;
 
 #[test]
 fn test_zero() {
