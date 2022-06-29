@@ -97,7 +97,7 @@ impl<const D: usize> Job<D> {
         self.leapfrog_end();
         self.evaluate_properties();
         self.accumulate_properties();
-        if (self.step_count % self.step_avg == 0) {
+        if self.step_count % self.step_avg == 0 {
             self.average_properies();
             self.print_summary();
             self.reset_props();
@@ -226,9 +226,9 @@ impl<const D: usize> JobSetup<D> {
         self
     }
 
-    pub fn lattice_and_random_vels(mut self, cells: [usize; D]) -> Self {
+    pub fn lattice_and_random_vels(mut self, cells: [usize; D], vel_mag: f32) -> Self {
         self.init_coords(cells)
-            .init_vels()
+            .init_vels(vel_mag)
     }
 
     fn init_coords(mut self, cells: [usize; D]) -> Self {
@@ -280,8 +280,20 @@ impl<const D: usize> JobSetup<D> {
         result
     }
 
-    fn init_vels(mut self) -> Self {
-        self.job.vel = Vec::with_capacity(self.job.n_mol());
+    fn init_vels(mut self, vel_mag: f32) -> Self {
+        let number_of_atoms = self.job.n_mol();
+        self.job.vel = Vec::with_capacity(number_of_atoms);
+        let mut v_sum = Vector::<D>::new();
+        for i in 0..number_of_atoms {
+            let mut v = Vector::<D>::random_vector();
+            v.multiply_by(vel_mag);
+            v_sum.plus(&v);
+            self.job.vel.push(v);
+        }
+        v_sum.multiply_by(-1_f32 / number_of_atoms as f32);
+        for v in self.job.vel.iter_mut() {
+            v.plus(&v_sum);
+        }
         self
     }
 

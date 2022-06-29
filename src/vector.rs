@@ -1,3 +1,5 @@
+use rand::Rng;
+
 #[derive(Debug)]
 pub struct Vector<const D: usize> {
     components: [f32; D],
@@ -11,6 +13,18 @@ pub struct Region<const D: usize> {
 impl<const D: usize> Vector<D> {
     pub fn new() -> Vector<D> {
         Vector { components: [0_f32; D] }
+    }
+
+    pub fn random_vector() -> Vector<D> {
+        let mut components = [0f32; D];
+        let mut rng = rand::thread_rng();
+        for i in 0..D {
+            components[i] = rng.gen();
+            components[i] -= 0.5;
+        }
+        Vector::<D> {
+            components,
+        }
     }
 
     pub fn components<'a>(&'a self) -> &'a [f32; D] {
